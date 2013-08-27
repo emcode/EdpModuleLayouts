@@ -6,13 +6,27 @@ class Module
     public function onBootstrap($e)
     {
         $e->getApplication()->getEventManager()->getSharedManager()->attach('Zend\Mvc\Controller\AbstractController', 'dispatch', function($e) {
-            $controller      = $e->getTarget();
+
+            $controller = $e->getTarget();
             $controllerClass = get_class($controller);
-            $moduleNamespace = substr($controllerClass, 0, strpos($controllerClass, '\\Controller'));
-            $config          = $e->getApplication()->getServiceManager()->get('config');
-            if (isset($config['module_layouts'][$moduleNamespace])) {
-                $controller->layout($config['module_layouts'][$moduleNamespace]);
+            $config = $e->getApplication()->getServiceManager()->get('config');
+
+            if (!isset($config['module_layouts']))
+            {
+                return;
             }
+
+            $moduleLayouts = $config['module_layouts'];
+
+            foreach($moduleLayouts as $moduleNamespace => $layoutName)
+            {
+               if (strpos($controllerClass, $moduleNamespace) === 0)
+               {
+                   $controller->layout($layoutName);
+                   break;
+               }
+            }
+
         }, 100);
     }
 }
